@@ -21,7 +21,7 @@
       <div id="chat-container">
         <div id="texts-container">
           <v-card
-            v-for="(text, key) in textList"
+            v-for="(text, key) in state.textList"
             :key="key"
             :class="text.type"
             :text="text.text"
@@ -43,25 +43,86 @@
 </template>
 
 <script setup lang="ts">
-  import { ref, onMounted } from 'vue'
+  import {
+    ref,
+    onMounted,
+    onBeforeMount,
+    nextTick,
+    getCurrentInstance,
+    reactive
+  } from 'vue'
+  import {
+    getSummary
+  } from './api/get-summary';
+  import {
+    qa
+  } from './api/qa';
 
   // Variables
-  const inputText = ref('Lorem');
-  const textList = [
-    { type: 'bot', text: 'Hello world!' }
-  ];
+  const inputText = ref('');
+  const state: {
+    textList: { type: 'bot'|'human'; text: string; }[]
+  } = reactive({
+    textList: []
+  });
 
   // Functions
-  function send() {
+  async function send() {
     const value = inputText.value;
-    inputText.value = '';
+    /*inputText.value = '';
     textList.push({
       type: 'human',
       text: value
     });
+    nextTick(() => {
+      scrollToBottom();
+    });
+    const response = await qa(value);
+    textList.push({
+      type: 'bot typing',
+      text: response
+    });
+    const instance = getCurrentInstance();
+    instance?.proxy?.$forceUpdate();
+    nextTick(() => {
+      scrollToBottom();
+    });*/
+    
+    inputText.value = '';
+    state.textList.push({
+      type: 'human',
+      text: value
+    });
+    const response = await qa(value);
+    state.textList.push({
+      type: 'bot',
+      text: response
+    });
+    nextTick(() => {
+      typingAnimation();
+      scrollToBottom();
+    });
+  }
+
+  function typingAnimation() {
+    const text = document.querySelector('#texts-container .v-card:last-child');
+    text?.classList.add('typing');
+    setTimeout(() => {
+      text?.classList.remove('typing');
+    }, 2000);
+  }
+
+  function scrollToBottom() {
+    const textsContainer = document.querySelector('#texts-container');
+    textsContainer?.scrollTo(0, textsContainer.scrollHeight);
   }
 
   // Lifecycle hooks
+  onBeforeMount(async () => {
+    const summary = await getSummary('ca');
+    state.textList.push({ type: 'bot', text: summary });
+  });
+
   onMounted(() => {
     document.querySelector('#typing-container textarea')?.addEventListener("keydown", (event: any) => {
       if (event.which === 13 && !event.shiftKey) {
@@ -86,6 +147,9 @@
     from, to { border-color: transparent }
     50% { border-color: #e74c3c; }
   }
+  body {
+    overflow: hidden;
+  }
   .v-toolbar .v-toolbar__prepend {
     margin-inline-start: 1.5em;
   }
@@ -95,8 +159,8 @@
   }
   #chat-container {
     max-width: 1024px;
-    margin: 2em auto;
-    height: calc(100% - 64px);
+    margin: 1em auto;
+    height: calc(100vh - 64px - 2em);
   }
   #chat-container .v-card .v-card-text {
     font-size: 1.5em;
@@ -123,9 +187,11 @@
     text-align: right;
   }
   #typing-container {
-    height: 150px;
+    height: 120px;
+    padding-top: 1em;
   }
   #texts-container {
-    height: calc(100% - 150px)
+    height: calc(100% - 100px);
+    overflow: scroll;
   }
 </style>
