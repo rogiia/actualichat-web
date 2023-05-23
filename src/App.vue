@@ -25,7 +25,20 @@
             :key="key"
             :class="text.type"
             :text="text.text"
-          ></v-card>
+            :title="text.title"
+          >
+            <v-card-actions v-if="text.link">
+              <v-btn
+                variant="text"
+                color="#e74c3c"
+                :href="text.link"
+                target="_blank"
+              >
+                Llegir meś
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+          <Loading v-if="loading" />
         </div>
         <div id="typing-container">
           <v-textarea
@@ -57,11 +70,18 @@
   import {
     qa
   } from './api/qa';
+  import Loading from './components/Loading.vue';
 
   // Variables
   const inputText = ref('');
+  const loading = ref(false);
   const state: {
-    textList: { type: 'bot'|'human'; text: string; }[]
+    textList: {
+      type: 'bot'|'human';
+      text: string;
+      title?: string;
+      link?: string;
+    }[]
   } = reactive({
     textList: []
   });
@@ -69,35 +89,24 @@
   // Functions
   async function send() {
     const value = inputText.value;
-    /*inputText.value = '';
-    textList.push({
-      type: 'human',
-      text: value
-    });
-    nextTick(() => {
-      scrollToBottom();
-    });
-    const response = await qa(value);
-    textList.push({
-      type: 'bot typing',
-      text: response
-    });
-    const instance = getCurrentInstance();
-    instance?.proxy?.$forceUpdate();
-    nextTick(() => {
-      scrollToBottom();
-    });*/
     
     inputText.value = '';
     state.textList.push({
       type: 'human',
       text: value
     });
+    nextTick(() => {
+      scrollToBottom();
+    });
+    scrollToBottom();
+    loading.value = true;
     const response = await qa(value);
     state.textList.push({
       type: 'bot',
-      text: response
+      text: response.text,
+      link: response.sourceDocuments[0].metadata.url
     });
+    loading.value = false;
     nextTick(() => {
       typingAnimation();
       scrollToBottom();
@@ -109,7 +118,7 @@
     text?.classList.add('typing');
     setTimeout(() => {
       text?.classList.remove('typing');
-    }, 2000);
+    }, (text?.textContent?.length) ? text.textContent.length * 100 : 1000);
   }
 
   function scrollToBottom() {
@@ -120,7 +129,7 @@
   // Lifecycle hooks
   onBeforeMount(async () => {
     const summary = await getSummary('ca');
-    state.textList.push({ type: 'bot', text: summary });
+    state.textList.push({ type: 'bot', text: summary, title: 'Resum del dia' });
   });
 
   onMounted(() => {
@@ -164,6 +173,7 @@
   }
   #chat-container .v-card .v-card-text {
     font-size: 1.5em;
+    line-height: 1.5em;
   }
   #chat-container .v-card.bot.typing .v-card-text {
     overflow: hidden; /* Ensures the content is not revealed until the animation */
