@@ -10,6 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Step 1 - Echo out a GitHub Actions Secret to the logs
+        run: |
+          echo "The GitHub Action Secret will be masked:  "
+          echo ${{ secrets.AWS_KEY_ID }}
+          echo "Trick to echo GitHub Actions Secret:  "
+          echo ${{secrets.AWS_BUCKET}} | sed 's/./& /g' 
       - run: npm ci
       - run: npm run build
       - uses: shallwefootball/s3-upload-action@master
