@@ -1,5 +1,20 @@
 <template>
   <v-app>
+    <v-dialog
+      v-model="dialog"
+      activator="parent"
+      width="auto"
+    >
+      <v-card style="max-width: 800px">
+        <v-card-text style="font-size: 1.5em;">
+          <h2>Actualichat</h2> Aquesta aplicació et proveeix d'un resum de les notícies de les últimes 24 hores. A més, si et queden preguntes sobre successos que hagin aparegut recentment als noticiaris, pots fer preguntes a la intel·ligència artificial, que coneix el contingut de tots els articles recents.
+        </v-card-text>
+        <v-card-actions>
+          <v-btn color="primary" block @click="dialog = false">Tanca</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
     <v-app-bar color="#e74c3c">
       <template v-slot:prepend>
         <v-img :width="30" :height="30" src="@/assets/newspaper-svgrepo-com.svg"></v-img>
@@ -73,6 +88,7 @@
   import Loading from './components/Loading.vue';
 
   // Variables
+  const dialog = ref(true);
   const inputText = ref('');
   const loading = ref(false);
   const state: {
