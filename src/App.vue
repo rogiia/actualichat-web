@@ -2,7 +2,6 @@
   <v-app>
     <v-dialog
       v-model="dialog"
-      activator="parent"
       width="auto"
     >
       <v-card style="max-width: 800px">
@@ -88,7 +87,7 @@
   import Loading from './components/Loading.vue';
 
   // Variables
-  const dialog = ref(true);
+  const dialog = ref(false);
   const inputText = ref('');
   const loading = ref(false);
   const state: {
@@ -157,6 +156,12 @@
         event.preventDefault(); // Prevents the addition of a new line in the text field
       }
     });
+
+    const hasSeenDialog = window.localStorage.getItem('ACTUALICHAT_DIALOG');
+    if (!hasSeenDialog) {
+      dialog.value = true;
+      window.localStorage.setItem('ACTUALICHAT_DIALOG', 'true');
+    }
   })
 </script>
 
